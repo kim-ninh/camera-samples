@@ -37,14 +37,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.webkit.MimeTypeMap
 import android.widget.ImageButton
-import androidx.camera.core.AspectRatio
-import androidx.camera.core.Camera
-import androidx.camera.core.CameraSelector
-import androidx.camera.core.ImageAnalysis
-import androidx.camera.core.ImageCapture
+import androidx.camera.core.*
 import androidx.camera.core.ImageCapture.Metadata
-import androidx.camera.core.ImageProxy
-import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.constraintlayout.widget.ConstraintLayout
@@ -184,11 +178,17 @@ class CameraFragment : Fragment() {
 
     /** Define callback that will be triggered after a photo has been taken and saved to disk */
     private val imageSavedListener = object : ImageCapture.OnImageSavedCallback {
-        override fun onError(imageCaptureError: Int, message: String, cause: Throwable?) {
-            Log.e(TAG, "Photo capture failed: $message", cause)
+        override fun onError(exception: ImageCaptureException) {
+            Log.e(TAG, "Photo capture failed: ${exception.message}", exception.cause)
         }
 
-        override fun onImageSaved(photoFile: File) {
+        override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
+
+            val photoFile: File = if (outputFileResults.savedUri == null){
+                outputDirectory.listFiles()!!.get(0)
+            }else{
+                File(outputFileResults.savedUri.toString())
+            }
             Log.d(TAG, "Photo capture succeeded: ${photoFile.absolutePath}")
 
             // We can only change the foreground Drawable using API level 23+ API
@@ -299,7 +299,7 @@ class CameraFragment : Fragment() {
                 .build()
 
             // Default PreviewSurfaceProvider
-            preview?.previewSurfaceProvider = viewFinder.previewSurfaceProvider
+            preview?.setSurfaceProvider(viewFinder.previewSurfaceProvider)
 
             // ImageCapture
             imageCapture = ImageCapture.Builder()
@@ -392,7 +392,12 @@ class CameraFragment : Fragment() {
                 }
 
                 // Setup image capture listener which is triggered after photo has been taken
-                imageCapture.takePicture(photoFile, metadata, mainExecutor, imageSavedListener)
+                val outputFileOptions = ImageCapture.OutputFileOptions.Builder(photoFile)
+                        .setMetadata(metadata)
+                        .build()
+
+                imageCapture.takePicture(outputFileOptions, mainExecutor, imageSavedListener)
+
 
                 // We can only change the foreground Drawable using API level 23+ API
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
