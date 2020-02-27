@@ -29,12 +29,11 @@ import android.media.MediaScannerConnection
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.Debug
+import android.util.DebugUtils
 import android.util.DisplayMetrics
 import android.util.Log
-import android.view.KeyEvent
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
 import android.webkit.MimeTypeMap
 import android.widget.ImageButton
 import androidx.camera.core.*
@@ -43,6 +42,7 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
+import androidx.core.util.Consumer
 import androidx.core.view.setPadding
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.LifecycleOwner
@@ -55,6 +55,7 @@ import com.android.example.cameraxbasic.MainActivity
 import com.android.example.cameraxbasic.R
 import com.android.example.cameraxbasic.utils.ANIMATION_FAST_MILLIS
 import com.android.example.cameraxbasic.utils.ANIMATION_SLOW_MILLIS
+import com.android.example.cameraxbasic.utils.idName
 import com.android.example.cameraxbasic.utils.simulateClick
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
@@ -83,7 +84,7 @@ typealias LumaListener = (luma: Double) -> Unit
 class CameraFragment : Fragment() {
 
     private lateinit var container: ConstraintLayout
-    private lateinit var viewFinder: PreviewView
+    private lateinit var viewFinder: TextureView
     private lateinit var outputDirectory: File
     private lateinit var broadcastManager: LocalBroadcastManager
     private lateinit var displayManager: DisplayManager
@@ -299,7 +300,31 @@ class CameraFragment : Fragment() {
                 .build()
 
             // Default PreviewSurfaceProvider
-            preview?.setSurfaceProvider(viewFinder.previewSurfaceProvider)
+            val textTureView = viewFinder
+
+            preview?.setSurfaceProvider { request ->
+                val surfaceTexture = textTureView.surfaceTexture
+                with(request.resolution){
+                    surfaceTexture.setDefaultBufferSize(width, height)
+                }
+
+                val surface = Surface(surfaceTexture)
+
+                request.addRequestCancellationListener(
+                        ContextCompat.getMainExecutor(context),
+                        Runnable {
+                            surface.release()
+                            surfaceTexture.release()
+                        })
+
+
+                request.provideSurface(surface, ContextCompat.getMainExecutor(context), Consumer<SurfaceRequest.Result> {
+
+                    if (it.resultCode == SurfaceRequest.Result.RESULT_SURFACE_USED_SUCCESSFULLY){
+                        it.surface.release()
+                    }
+                })
+            }
 
             // ImageCapture
             imageCapture = ImageCapture.Builder()
@@ -518,6 +543,23 @@ class CameraFragment : Fragment() {
             listeners.forEach { it(luma) }
 
             image.close()
+        }
+    }
+
+    private fun printAllChildName(view: View?){
+        if (view == null)
+            return
+
+        Log.i(TAG, "Id Name: ${view.idName}")
+        Log.i(TAG, " ")
+
+        if (view !is ViewGroup)
+            return
+
+        Log.i(TAG,"Child: ")
+        for (i in 0 .. view.childCount){
+            val child = view.getChildAt(i)
+            printAllChildName(child)
         }
     }
 

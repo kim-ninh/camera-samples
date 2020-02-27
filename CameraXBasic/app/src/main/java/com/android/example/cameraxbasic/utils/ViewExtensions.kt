@@ -88,3 +88,11 @@ fun AlertDialog.showImmersive() {
     // Set the dialog to focusable again
     window?.clearFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
 }
+
+val View.idName: String
+get() {
+    if (id == View.NO_ID)
+        return "no_id"
+
+    return resources.getResourceName(id)
+}
