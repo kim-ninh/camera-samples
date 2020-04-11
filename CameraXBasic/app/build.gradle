@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Google LLC
+ * Copyright 2020 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,17 +47,6 @@ android {
        }
     }
 
-    // Set the source of tests to same for both Unit and Instrumented tests
-    sourceSets {
-        String sharedTestDir = 'src/test/java'
-        test {
-            java.srcDir sharedTestDir
-        }
-        androidTest {
-            java.srcDir sharedTestDir
-        }
-    }
-
     // Necessary for Robolectric (Unit tests)
     testOptions {
         unitTests {
@@ -83,7 +72,7 @@ dependencies {
     implementation "androidx.navigation:navigation-ui-ktx:$nav_version"
 
     // CameraX core library
-    def camerax_version = "1.0.0-beta01"
+    def camerax_version = '1.0.0-beta02'
     implementation "androidx.camera:camera-core:$camerax_version"
 
     // CameraX Camera2 extensions
@@ -93,10 +82,10 @@ dependencies {
     implementation "androidx.camera:camera-lifecycle:$camerax_version"
 
     // CameraX View class
-    implementation "androidx.camera:camera-view:1.0.0-alpha08"
+    implementation 'androidx.camera:camera-view:1.0.0-alpha09'
 
     // CameraX Extensions library
-    // implementation "androidx.camera:camera-extensions:1.0.0-alpha08"
+    // implementation "androidx.camera:camera-extensions:1.0.0-alpha09"
 
     // Glide
     implementation 'com.github.bumptech.glide:glide:4.11.0'
@@ -107,7 +96,7 @@ dependencies {
     testImplementation 'androidx.test:rules:1.2.0'
     testImplementation 'androidx.test:runner:1.2.0'
     testImplementation 'androidx.test.espresso:espresso-core:3.2.0'
-    testImplementation "org.robolectric:robolectric:4.3.1"
+    testImplementation 'org.robolectric:robolectric:4.3.1'
 
     // Instrumented testing
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
